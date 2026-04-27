@@ -2,10 +2,20 @@
 
 # Usage:
 #  speak <voice_id> <textfile>
+#  voice_id can be: "ashley_neuro" for Kokoro TTS (Azure Ashley replica)
 
 function installed() { command -v $1 >/dev/null 2>&1; }
 
-if installed espeak; then
+# Kokoro TTS (Azure Ashley voice replica - local, efficient with E-core locking)
+if [ "$1" = "ashley_neuro" ]; then
+  if installed kokoro-tts && installed ffplay; then
+    kokoro-tts "$(cat $2)" --voice ashley_neuro --stream | ffplay -autoexit -nodisp -loglevel quiet -hide_banner -i - >/dev/null 2>&1
+  else
+    echo "Kokoro TTS not found. Install it with: pip install kokoro-tts"
+    echo "Or use one of the other voice options below."
+  fi
+
+elif installed espeak; then
   espeak -v en-us+m$1 -s 225 -p 50 -a 200 -g 5 -k 5 -f $2
 
 elif installed piper && installed aplay; then
@@ -33,7 +43,8 @@ elif installed python3 && \
     #ffplay -autoexit -nodisp -loglevel quiet -hide_banner -i ./audio.mp3 >/dev/null 2>&1
 
 else
-  echo 'Install espeak ("brew install espeak" or "apt-get install espeak"),'
+  echo 'Install kokoro-tts ("pip install kokoro-tts") for Ashley voice (local, E-core optimized),'
+  echo 'espeak ("brew install espeak" or "apt-get install espeak"),'
   echo 'piper ("pip install piper-tts" or https://github.com/rhasspy/piper) with aplay,'
   echo 'or elevenlabs ("pip install elevenlabs") with ffplay.'
   echo '(export ELEVEN_API_KEY if you have an api key from https://beta.elevenlabs.io)'
